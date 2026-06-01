@@ -405,6 +405,208 @@ tab_analyse, tab_doc = st.tabs(["📊 Analyse & Carte", "📖 Documentation"])
 
 
 # ════════════════════════════════════════════════════════════
+# TAB 2 — DOCUMENTATION
+# ════════════════════════════════════════════════════════════
+with tab_doc:
+
+    st.markdown("""
+<div class="doc-hero">
+  <div class="badge-pill">Documentation technique v1.0</div>
+  <h1>Pipeline DVF <em>×</em> BODACC</h1>
+  <div class="sub">Identification automatique de prospects immobiliers par croisement de données publiques françaises. Signaux de vie · Scoring comportemental · Export CRM</div>
+  <div class="doc-hero-stats">
+    <div class="doc-hero-stat"><div class="h-val">5</div><div class="h-lbl">Signaux détectés</div></div>
+    <div class="doc-hero-stat"><div class="h-val">100%</div><div class="h-lbl">Données publiques</div></div>
+    <div class="doc-hero-stat"><div class="h-val">15</div><div class="h-lbl">Départements</div></div>
+    <div class="doc-hero-stat"><div class="h-val">0–100</div><div class="h-lbl">Échelle de scoring</div></div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    # Section 1 — Sources
+    st.markdown("""
+<div class="doc-section">
+  <div class="sec-num">01 — Sources de données</div>
+  <h2>DVF et BODACC</h2>
+  <p>Le pipeline croise deux bases de données publiques françaises complémentaires pour générer des signaux de propension à vendre ou acheter un bien immobilier.</p>
+  <div class="pipe-flow">
+    <div class="pipe-step"><div class="ps-icon">🏛</div><span class="ps-name">DVF</span><div class="ps-desc">data.gouv.fr<br>Transactions foncières</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="ps-icon">⚖️</div><span class="ps-name">BODACC</span><div class="ps-desc">OpenDataSoft<br>Annonces légales</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="ps-icon">🔗</div><span class="ps-name">Croisement</span><div class="ps-desc">Jointure par<br>adresse / CP</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="ps-icon">📊</div><span class="ps-name">Scoring</span><div class="ps-desc">5 signaux<br>0–100 pts</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="ps-icon">📋</div><span class="ps-name">Export CSV</span><div class="ps-desc">Prospects triés<br>par score</div></div>
+  </div>
+  <h3>DVF — Demande de Valeurs Foncières</h3>
+  <p>Publiée par la DGFiP, elle recense toutes les transactions immobilières enregistrées aux services de la publicité foncière. Elle couvre les ventes de biens bâtis et non bâtis, les adjudications et les échanges. Mise à jour trimestriellement avec un décalage de 3 à 6 mois. Disponible depuis 2014.</p>
+  <h3>BODACC — Bulletin Officiel des Annonces Civiles et Commerciales</h3>
+  <p>Publié par la DILA, il contient les annonces légales obligatoires : ventes de fonds de commerce, modifications d'entreprises, procédures collectives. <strong>Note :</strong> le BODACC ne contient pas directement les successions de particuliers — le signal "succession" est une corrélation temporelle entre une annonce et une transaction DVF rapprochée.</p>
+</div>
+""", unsafe_allow_html=True)
+
+    # Section 2 — Signaux
+    st.markdown("""
+<div class="doc-section">
+  <div class="sec-num">02 — Signaux détectés</div>
+  <h2>Les 5 signaux de propension</h2>
+  <p>Chaque prospect est associé à un signal principal. Les signaux représentent des événements de vie corrélés statistiquement à une mobilité résidentielle.</p>
+
+  <div class="signal-row">
+    <div class="sig-dot" style="background:#8a4a1a"></div>
+    <div class="sig-body">
+      <div class="sig-name">Succession BODACC</div>
+      <div class="sig-desc">Vente d'un bien dans les 18 mois suivant une annonce BODACC liée à une succession dans le même secteur. Le délai court est un fort indicateur de contrainte de liquidation.</div>
+      <div class="sig-score">50–100 pts · +30 si &lt;90j · +20 si &lt;180j · +20 adjudication</div>
+    </div>
+  </div>
+  <div class="signal-row">
+    <div class="sig-dot" style="background:#c4440a"></div>
+    <div class="sig-body">
+      <div class="sig-name">Divorce / séparation</div>
+      <div class="sig-desc">Bien de type T3/T4 revendu dans les 3 ans suivant l'achat initial. Cette revente rapide d'un bien familial est corrélée à une séparation ou un changement de situation conjugale.</div>
+      <div class="sig-score">60 pts (1–3 ans) · 80 pts (&lt;1 an)</div>
+    </div>
+  </div>
+  <div class="signal-row">
+    <div class="sig-dot" style="background:#1a6b4a"></div>
+    <div class="sig-body">
+      <div class="sig-name">Upgrade famille</div>
+      <div class="sig-desc">Achat d'un T1/T2 dans les 4 dernières années, suggérant une primo-accession ou un célibataire devenu parent. Le propriétaire est désormais candidat à un bien plus grand.</div>
+      <div class="sig-score">55 pts (score fixe)</div>
+    </div>
+  </div>
+  <div class="signal-row">
+    <div class="sig-dot" style="background:#1a4a8a"></div>
+    <div class="sig-body">
+      <div class="sig-name">Retraite / downsizing</div>
+      <div class="sig-desc">Grand bien (T5+) vendu à plus de 10% sous la médiane de la commune. La décote suggère une motivation forte et une volonté de vendre rapidement.</div>
+      <div class="sig-score">65 pts (décote 10–20%) · 80 pts (décote &gt;20%)</div>
+    </div>
+  </div>
+  <div class="signal-row">
+    <div class="sig-dot" style="background:#7a4aa0"></div>
+    <div class="sig-body">
+      <div class="sig-name">Primo-acheteur potentiel</div>
+      <div class="sig-desc">T1/T2 vendu à moins de 70% du prix médian du code postal. Le bas prix suggère un bien d'entrée de gamme dont le propriétaire sera candidat à un achat supérieur.</div>
+      <div class="sig-score">50 pts (score fixe)</div>
+    </div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    # Section 3 — Schéma CSV
+    st.markdown("""
+<div class="doc-section">
+  <div class="sec-num">03 — Schéma de sortie</div>
+  <h2>Structure du CSV généré</h2>
+  <p>Le pipeline produit un fichier CSV structuré, trié par <span class="inline-code">score_signal</span> décroissant.</p>
+  <table class="schema-table">
+    <thead><tr><th>Colonne</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>signal</td><td>str</td><td>Code du signal (heritage, divorce, upgrade, retraite, primo)</td></tr>
+      <tr><td>signal_label</td><td>str</td><td>Libellé lisible du signal</td></tr>
+      <tr><td>score_signal</td><td>float</td><td>Score de propension 0–100. Prospects chauds = score ≥ 70.</td></tr>
+      <tr><td>chaleur</td><td>str</td><td>Catégorie qualitative : Très chaud / Chaud / Tiède</td></tr>
+      <tr><td>adresse_complete</td><td>str</td><td>Adresse postale complète du bien (source DVF)</td></tr>
+      <tr><td>code_postal</td><td>str</td><td>Code postal (5 chiffres)</td></tr>
+      <tr><td>nom_commune</td><td>str</td><td>Commune de la transaction</td></tr>
+      <tr><td>valeur_fonciere</td><td>float</td><td>Prix de vente en euros</td></tr>
+      <tr><td>surface_reelle_bati</td><td>float</td><td>Surface habitable en m²</td></tr>
+      <tr><td>nombre_pieces_principales</td><td>int</td><td>Nombre de pièces principales</td></tr>
+      <tr><td>date_mutation</td><td>date</td><td>Date de la transaction (YYYY-MM-DD)</td></tr>
+      <tr><td>nature_mutation</td><td>str</td><td>Type de transaction (Vente, Adjudication…)</td></tr>
+      <tr><td>longitude / latitude</td><td>float</td><td>Coordonnées GPS pour la cartographie</td></tr>
+    </tbody>
+  </table>
+</div>
+""", unsafe_allow_html=True)
+
+    # Section 4 — Limites
+    st.markdown("""
+<div class="doc-section">
+  <div class="sec-num">04 — Limites &amp; biais</div>
+  <h2>Ce que le pipeline ne fait pas</h2>
+  <p>Comprendre les limites est essentiel pour ne pas sur-interpréter les résultats.</p>
+  <div class="limit-grid">
+    <div class="limit-card warn">
+      <div class="lc-head">⚠ Limites importantes</div>
+      <ul>
+        <li><strong>Pas de noms ni contacts</strong> — le DVF ne contient pas l'identité des vendeurs. Le pipeline identifie des adresses et des patterns, pas des personnes.</li>
+        <li><strong>Succession = proxy indirect</strong> — le signal "héritage" est une corrélation temporelle, pas une cause avérée.</li>
+        <li><strong>Données passées ≠ intentions futures</strong> — une transaction en 2024 est déjà réalisée. Le signal indique un profil actif, pas un bien à vendre aujourd'hui.</li>
+        <li><strong>Faux positifs sur upgrade</strong> — un T2 acheté il y a 3 ans peut avoir été vendu sans lien avec une naissance.</li>
+        <li><strong>Pas de données temps réel</strong> — le DVF est mis à jour trimestriellement avec un décalage de 3–6 mois.</li>
+      </ul>
+    </div>
+    <div class="limit-card ok">
+      <div class="lc-head">✓ Ce que le pipeline fait bien</div>
+      <ul>
+        <li><strong>Segmentation géographique précise</strong> — identification des zones à forte propension par code postal.</li>
+        <li><strong>Scoring relatif fiable</strong> — les scores permettent de prioriser des zones et des types de biens.</li>
+        <li><strong>Volume exploitable</strong> — des milliers de signaux par département pour alimenter des campagnes ciblées.</li>
+        <li><strong>Reproductible et automatisable</strong> — peut tourner mensuellement pour suivre l'évolution du marché.</li>
+        <li><strong>100% données publiques</strong> — aucun risque légal lié à l'acquisition des données sources.</li>
+        <li><strong>Enrichissable</strong> — base idéale pour croiser avec d'autres sources (INSEE, notaires, CRM).</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout warn"><strong>Usage recommandé :</strong> utiliser le CSV comme base de segmentation pour des <em>audiences publicitaires</em> (Meta, Google) par zone géographique, et non comme liste de prospection directe nominative. Pour la prospection directe, un enrichissement via un prestataire habilité (RGPD) est nécessaire.</div>
+</div>
+""", unsafe_allow_html=True)
+
+    # Section 5 — RGPD
+    st.markdown("""
+<div class="doc-section">
+  <div class="sec-num">05 — Conformité RGPD</div>
+  <h2>Cadre légal et bonnes pratiques</h2>
+  <p>Le traitement de données à des fins commerciales est encadré par le RGPD et la loi Informatique et Libertés.</p>
+  <div class="rgpd-grid">
+    <div class="rgpd-item"><span class="ri-status ri-ok">✓ Autorisé</span><div class="ri-label">Ciblage géographique</div><p>Utiliser les codes postaux et communes pour cibler des campagnes Meta/Google sur des zones à forte propension.</p></div>
+    <div class="rgpd-item"><span class="ri-status ri-ok">✓ Autorisé</span><div class="ri-label">Segments agrégés</div><p>Créer des audiences similaires (Lookalike) à partir de visiteurs de votre site sans traitement nominal.</p></div>
+    <div class="rgpd-item"><span class="ri-status ri-ok">✓ Autorisé</span><div class="ri-label">Analyse statistique</div><p>Utiliser les données agrégées pour comprendre le marché et adapter une stratégie commerciale.</p></div>
+    <div class="rgpd-item"><span class="ri-status ri-warn">⚠ Zone grise</span><div class="ri-label">Prospection postale</div><p>Envoyer un courrier à une adresse identifiée sans consentement préalable. Possible sous conditions avec base légale documentée.</p></div>
+    <div class="rgpd-item"><span class="ri-status ri-warn">⚠ Zone grise</span><div class="ri-label">Enrichissement d'adresses</div><p>Croiser les adresses DVF avec un annuaire. Possible uniquement via un prestataire habilité avec consentement géré.</p></div>
+    <div class="rgpd-item"><span class="ri-status ri-no">✗ Interdit</span><div class="ri-label">Fichier nominatif direct</div><p>Constituer une base Nom + Adresse + Événement de vie sans base légale explicite. Sanction CNIL possible.</p></div>
+  </div>
+  <div class="callout success"><strong>Recommandation :</strong> La voie la plus sûre est d'utiliser les insights géographiques du pipeline pour créer des <strong>landing pages SEO thématiques</strong> et des <strong>campagnes Meta/Google ciblées géographiquement</strong>. Conformité RGPD garantie.</div>
+</div>
+""", unsafe_allow_html=True)
+
+    # Section 6 — Guide
+    st.markdown("""
+<div class="doc-section">
+  <div class="sec-num">06 — Guide d'utilisation</div>
+  <h2>Prise en main pas à pas</h2>
+  <div class="steps-doc">
+    <div class="step-doc"><div class="step-doc-num">1</div><div class="step-doc-content"><strong>Installer les dépendances</strong> — Lancer <span class="inline-code">pip install -r requirements.txt</span>. Python 3.8+ requis.</div></div>
+    <div class="step-doc"><div class="step-doc-num">2</div><div class="step-doc-content"><strong>Configurer le département cible</strong> — Sélectionner le département et l'année dans la sidebar, ou modifier <span class="inline-code">DEPT</span> dans <span class="inline-code">pipeline.py</span>.</div></div>
+    <div class="step-doc"><div class="step-doc-num">3</div><div class="step-doc-content"><strong>Lancer l'analyse</strong> — Cliquer sur <strong>→ Lancer l'analyse</strong>. Le pipeline télécharge DVF (~50–200 MB) et les données BODACC puis effectue le croisement.</div></div>
+    <div class="step-doc"><div class="step-doc-num">4</div><div class="step-doc-content"><strong>Analyser les résultats</strong> — Explorez la carte interactive et le tableau des prospects. Filtrez par signal et score minimum.</div></div>
+    <div class="step-doc"><div class="step-doc-num">5</div><div class="step-doc-content"><strong>Exporter</strong> — Téléchargez le CSV via <strong>⬇ Télécharger le CSV complet</strong>. Filtrez par <span class="inline-code">score_signal ≥ 70</span> pour les prospects chauds.</div></div>
+    <div class="step-doc"><div class="step-doc-num">6</div><div class="step-doc-content"><strong>Activer</strong> — Utilisez les codes postaux pour créer des audiences publicitaires géolocalisées sur Meta ou Google Ads. Segmentez par signal pour adapter le message.</div></div>
+  </div>
+  <h3>Exemple d'intégration CRM</h3>
+  <div class="doc-code"><span class="c"># Import dans HubSpot via API</span>
+<span class="k">import</span> pandas <span class="k">as</span> pd
+
+df = pd.<span class="f">read_csv</span>(<span class="s">'data/prospects_75_20241201.csv'</span>)
+hot = df[df[<span class="s">'score_signal'</span>] >= 70].copy()
+hot[<span class="s">'hubspot_tag'</span>] = hot[<span class="s">'signal'</span>].<span class="f">map</span>({
+    <span class="s">'divorce'</span>:  <span class="s">'PROSPECT_DIVORCE'</span>,
+    <span class="s">'retraite'</span>: <span class="s">'PROSPECT_RETRAITE'</span>,
+    <span class="s">'heritage'</span>: <span class="s">'PROSPECT_HERITAGE'</span>,
+    <span class="s">'upgrade'</span>:  <span class="s">'PROSPECT_UPGRADE'</span>,
+    <span class="s">'primo'</span>:    <span class="s">'PROSPECT_PRIMO'</span>,
+})
+hot.<span class="f">to_csv</span>(<span class="s">'hubspot_import.csv'</span>, index=<span class="k">False</span>)</div>
+</div>
+""", unsafe_allow_html=True)
+
+
+# ════════════════════════════════════════════════════════════
 # TAB 1 — ANALYSE
 # ════════════════════════════════════════════════════════════
 with tab_analyse:
@@ -657,205 +859,3 @@ if (DATA.length > 0) {{
                              "Score moy.": st.column_config.ProgressColumn("Score moy.", min_value=0, max_value=100, format="%.1f"),
                              "Prospects": st.column_config.NumberColumn("Prospects"),
                          })
-
-
-# ════════════════════════════════════════════════════════════
-# TAB 2 — DOCUMENTATION
-# ════════════════════════════════════════════════════════════
-with tab_doc:
-
-    st.markdown("""
-<div class="doc-hero">
-  <div class="badge-pill">Documentation technique v1.0</div>
-  <h1>Pipeline DVF <em>×</em> BODACC</h1>
-  <div class="sub">Identification automatique de prospects immobiliers par croisement de données publiques françaises. Signaux de vie · Scoring comportemental · Export CRM</div>
-  <div class="doc-hero-stats">
-    <div class="doc-hero-stat"><div class="h-val">5</div><div class="h-lbl">Signaux détectés</div></div>
-    <div class="doc-hero-stat"><div class="h-val">100%</div><div class="h-lbl">Données publiques</div></div>
-    <div class="doc-hero-stat"><div class="h-val">15</div><div class="h-lbl">Départements</div></div>
-    <div class="doc-hero-stat"><div class="h-val">0–100</div><div class="h-lbl">Échelle de scoring</div></div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
-
-    # Section 1 — Sources
-    st.markdown("""
-<div class="doc-section">
-  <div class="sec-num">01 — Sources de données</div>
-  <h2>DVF et BODACC</h2>
-  <p>Le pipeline croise deux bases de données publiques françaises complémentaires pour générer des signaux de propension à vendre ou acheter un bien immobilier.</p>
-  <div class="pipe-flow">
-    <div class="pipe-step"><div class="ps-icon">🏛</div><span class="ps-name">DVF</span><div class="ps-desc">data.gouv.fr<br>Transactions foncières</div></div>
-    <div class="pipe-arrow">→</div>
-    <div class="pipe-step"><div class="ps-icon">⚖️</div><span class="ps-name">BODACC</span><div class="ps-desc">OpenDataSoft<br>Annonces légales</div></div>
-    <div class="pipe-arrow">→</div>
-    <div class="pipe-step"><div class="ps-icon">🔗</div><span class="ps-name">Croisement</span><div class="ps-desc">Jointure par<br>adresse / CP</div></div>
-    <div class="pipe-arrow">→</div>
-    <div class="pipe-step"><div class="ps-icon">📊</div><span class="ps-name">Scoring</span><div class="ps-desc">5 signaux<br>0–100 pts</div></div>
-    <div class="pipe-arrow">→</div>
-    <div class="pipe-step"><div class="ps-icon">📋</div><span class="ps-name">Export CSV</span><div class="ps-desc">Prospects triés<br>par score</div></div>
-  </div>
-  <h3>DVF — Demande de Valeurs Foncières</h3>
-  <p>Publiée par la DGFiP, elle recense toutes les transactions immobilières enregistrées aux services de la publicité foncière. Elle couvre les ventes de biens bâtis et non bâtis, les adjudications et les échanges. Mise à jour trimestriellement avec un décalage de 3 à 6 mois. Disponible depuis 2014.</p>
-  <h3>BODACC — Bulletin Officiel des Annonces Civiles et Commerciales</h3>
-  <p>Publié par la DILA, il contient les annonces légales obligatoires : ventes de fonds de commerce, modifications d'entreprises, procédures collectives. <strong>Note :</strong> le BODACC ne contient pas directement les successions de particuliers — le signal "succession" est une corrélation temporelle entre une annonce et une transaction DVF rapprochée.</p>
-</div>
-""", unsafe_allow_html=True)
-
-    # Section 2 — Signaux
-    st.markdown("""
-<div class="doc-section">
-  <div class="sec-num">02 — Signaux détectés</div>
-  <h2>Les 5 signaux de propension</h2>
-  <p>Chaque prospect est associé à un signal principal. Les signaux représentent des événements de vie corrélés statistiquement à une mobilité résidentielle.</p>
-
-  <div class="signal-row">
-    <div class="sig-dot" style="background:#8a4a1a"></div>
-    <div class="sig-body">
-      <div class="sig-name">Succession BODACC</div>
-      <div class="sig-desc">Vente d'un bien dans les 18 mois suivant une annonce BODACC liée à une succession dans le même secteur. Le délai court est un fort indicateur de contrainte de liquidation.</div>
-      <div class="sig-score">50–100 pts · +30 si &lt;90j · +20 si &lt;180j · +20 adjudication</div>
-    </div>
-  </div>
-  <div class="signal-row">
-    <div class="sig-dot" style="background:#c4440a"></div>
-    <div class="sig-body">
-      <div class="sig-name">Divorce / séparation</div>
-      <div class="sig-desc">Bien de type T3/T4 revendu dans les 3 ans suivant l'achat initial. Cette revente rapide d'un bien familial est corrélée à une séparation ou un changement de situation conjugale.</div>
-      <div class="sig-score">60 pts (1–3 ans) · 80 pts (&lt;1 an)</div>
-    </div>
-  </div>
-  <div class="signal-row">
-    <div class="sig-dot" style="background:#1a6b4a"></div>
-    <div class="sig-body">
-      <div class="sig-name">Upgrade famille</div>
-      <div class="sig-desc">Achat d'un T1/T2 dans les 4 dernières années, suggérant une primo-accession ou un célibataire devenu parent. Le propriétaire est désormais candidat à un bien plus grand.</div>
-      <div class="sig-score">55 pts (score fixe)</div>
-    </div>
-  </div>
-  <div class="signal-row">
-    <div class="sig-dot" style="background:#1a4a8a"></div>
-    <div class="sig-body">
-      <div class="sig-name">Retraite / downsizing</div>
-      <div class="sig-desc">Grand bien (T5+) vendu à plus de 10% sous la médiane de la commune. La décote suggère une motivation forte et une volonté de vendre rapidement.</div>
-      <div class="sig-score">65 pts (décote 10–20%) · 80 pts (décote &gt;20%)</div>
-    </div>
-  </div>
-  <div class="signal-row">
-    <div class="sig-dot" style="background:#7a4aa0"></div>
-    <div class="sig-body">
-      <div class="sig-name">Primo-acheteur potentiel</div>
-      <div class="sig-desc">T1/T2 vendu à moins de 70% du prix médian du code postal. Le bas prix suggère un bien d'entrée de gamme dont le propriétaire sera candidat à un achat supérieur.</div>
-      <div class="sig-score">50 pts (score fixe)</div>
-    </div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
-
-    # Section 3 — Schéma CSV
-    st.markdown("""
-<div class="doc-section">
-  <div class="sec-num">03 — Schéma de sortie</div>
-  <h2>Structure du CSV généré</h2>
-  <p>Le pipeline produit un fichier CSV structuré, trié par <span class="inline-code">score_signal</span> décroissant.</p>
-  <table class="schema-table">
-    <thead><tr><th>Colonne</th><th>Type</th><th>Description</th></tr></thead>
-    <tbody>
-      <tr><td>signal</td><td>str</td><td>Code du signal (heritage, divorce, upgrade, retraite, primo)</td></tr>
-      <tr><td>signal_label</td><td>str</td><td>Libellé lisible du signal</td></tr>
-      <tr><td>score_signal</td><td>float</td><td>Score de propension 0–100. Prospects chauds = score ≥ 70.</td></tr>
-      <tr><td>chaleur</td><td>str</td><td>Catégorie qualitative : Très chaud / Chaud / Tiède</td></tr>
-      <tr><td>adresse_complete</td><td>str</td><td>Adresse postale complète du bien (source DVF)</td></tr>
-      <tr><td>code_postal</td><td>str</td><td>Code postal (5 chiffres)</td></tr>
-      <tr><td>nom_commune</td><td>str</td><td>Commune de la transaction</td></tr>
-      <tr><td>valeur_fonciere</td><td>float</td><td>Prix de vente en euros</td></tr>
-      <tr><td>surface_reelle_bati</td><td>float</td><td>Surface habitable en m²</td></tr>
-      <tr><td>nombre_pieces_principales</td><td>int</td><td>Nombre de pièces principales</td></tr>
-      <tr><td>date_mutation</td><td>date</td><td>Date de la transaction (YYYY-MM-DD)</td></tr>
-      <tr><td>nature_mutation</td><td>str</td><td>Type de transaction (Vente, Adjudication…)</td></tr>
-      <tr><td>longitude / latitude</td><td>float</td><td>Coordonnées GPS pour la cartographie</td></tr>
-    </tbody>
-  </table>
-</div>
-""", unsafe_allow_html=True)
-
-    # Section 4 — Limites
-    st.markdown("""
-<div class="doc-section">
-  <div class="sec-num">04 — Limites &amp; biais</div>
-  <h2>Ce que le pipeline ne fait pas</h2>
-  <p>Comprendre les limites est essentiel pour ne pas sur-interpréter les résultats.</p>
-  <div class="limit-grid">
-    <div class="limit-card warn">
-      <div class="lc-head">⚠ Limites importantes</div>
-      <ul>
-        <li><strong>Pas de noms ni contacts</strong> — le DVF ne contient pas l'identité des vendeurs. Le pipeline identifie des adresses et des patterns, pas des personnes.</li>
-        <li><strong>Succession = proxy indirect</strong> — le signal "héritage" est une corrélation temporelle, pas une cause avérée.</li>
-        <li><strong>Données passées ≠ intentions futures</strong> — une transaction en 2024 est déjà réalisée. Le signal indique un profil actif, pas un bien à vendre aujourd'hui.</li>
-        <li><strong>Faux positifs sur upgrade</strong> — un T2 acheté il y a 3 ans peut avoir été vendu sans lien avec une naissance.</li>
-        <li><strong>Pas de données temps réel</strong> — le DVF est mis à jour trimestriellement avec un décalage de 3–6 mois.</li>
-      </ul>
-    </div>
-    <div class="limit-card ok">
-      <div class="lc-head">✓ Ce que le pipeline fait bien</div>
-      <ul>
-        <li><strong>Segmentation géographique précise</strong> — identification des zones à forte propension par code postal.</li>
-        <li><strong>Scoring relatif fiable</strong> — les scores permettent de prioriser des zones et des types de biens.</li>
-        <li><strong>Volume exploitable</strong> — des milliers de signaux par département pour alimenter des campagnes ciblées.</li>
-        <li><strong>Reproductible et automatisable</strong> — peut tourner mensuellement pour suivre l'évolution du marché.</li>
-        <li><strong>100% données publiques</strong> — aucun risque légal lié à l'acquisition des données sources.</li>
-        <li><strong>Enrichissable</strong> — base idéale pour croiser avec d'autres sources (INSEE, notaires, CRM).</li>
-      </ul>
-    </div>
-  </div>
-  <div class="callout warn"><strong>Usage recommandé :</strong> utiliser le CSV comme base de segmentation pour des <em>audiences publicitaires</em> (Meta, Google) par zone géographique, et non comme liste de prospection directe nominative. Pour la prospection directe, un enrichissement via un prestataire habilité (RGPD) est nécessaire.</div>
-</div>
-""", unsafe_allow_html=True)
-
-    # Section 5 — RGPD
-    st.markdown("""
-<div class="doc-section">
-  <div class="sec-num">05 — Conformité RGPD</div>
-  <h2>Cadre légal et bonnes pratiques</h2>
-  <p>Le traitement de données à des fins commerciales est encadré par le RGPD et la loi Informatique et Libertés.</p>
-  <div class="rgpd-grid">
-    <div class="rgpd-item"><span class="ri-status ri-ok">✓ Autorisé</span><div class="ri-label">Ciblage géographique</div><p>Utiliser les codes postaux et communes pour cibler des campagnes Meta/Google sur des zones à forte propension.</p></div>
-    <div class="rgpd-item"><span class="ri-status ri-ok">✓ Autorisé</span><div class="ri-label">Segments agrégés</div><p>Créer des audiences similaires (Lookalike) à partir de visiteurs de votre site sans traitement nominal.</p></div>
-    <div class="rgpd-item"><span class="ri-status ri-ok">✓ Autorisé</span><div class="ri-label">Analyse statistique</div><p>Utiliser les données agrégées pour comprendre le marché et adapter une stratégie commerciale.</p></div>
-    <div class="rgpd-item"><span class="ri-status ri-warn">⚠ Zone grise</span><div class="ri-label">Prospection postale</div><p>Envoyer un courrier à une adresse identifiée sans consentement préalable. Possible sous conditions avec base légale documentée.</p></div>
-    <div class="rgpd-item"><span class="ri-status ri-warn">⚠ Zone grise</span><div class="ri-label">Enrichissement d'adresses</div><p>Croiser les adresses DVF avec un annuaire. Possible uniquement via un prestataire habilité avec consentement géré.</p></div>
-    <div class="rgpd-item"><span class="ri-status ri-no">✗ Interdit</span><div class="ri-label">Fichier nominatif direct</div><p>Constituer une base Nom + Adresse + Événement de vie sans base légale explicite. Sanction CNIL possible.</p></div>
-  </div>
-  <div class="callout success"><strong>Recommandation :</strong> La voie la plus sûre est d'utiliser les insights géographiques du pipeline pour créer des <strong>landing pages SEO thématiques</strong> et des <strong>campagnes Meta/Google ciblées géographiquement</strong>. Conformité RGPD garantie.</div>
-</div>
-""", unsafe_allow_html=True)
-
-    # Section 6 — Guide
-    st.markdown("""
-<div class="doc-section">
-  <div class="sec-num">06 — Guide d'utilisation</div>
-  <h2>Prise en main pas à pas</h2>
-  <div class="steps-doc">
-    <div class="step-doc"><div class="step-doc-num">1</div><div class="step-doc-content"><strong>Installer les dépendances</strong> — Lancer <span class="inline-code">pip install -r requirements.txt</span>. Python 3.8+ requis.</div></div>
-    <div class="step-doc"><div class="step-doc-num">2</div><div class="step-doc-content"><strong>Configurer le département cible</strong> — Sélectionner le département et l'année dans la sidebar, ou modifier <span class="inline-code">DEPT</span> dans <span class="inline-code">pipeline.py</span>.</div></div>
-    <div class="step-doc"><div class="step-doc-num">3</div><div class="step-doc-content"><strong>Lancer l'analyse</strong> — Cliquer sur <strong>→ Lancer l'analyse</strong>. Le pipeline télécharge DVF (~50–200 MB) et les données BODACC puis effectue le croisement.</div></div>
-    <div class="step-doc"><div class="step-doc-num">4</div><div class="step-doc-content"><strong>Analyser les résultats</strong> — Explorez la carte interactive et le tableau des prospects. Filtrez par signal et score minimum.</div></div>
-    <div class="step-doc"><div class="step-doc-num">5</div><div class="step-doc-content"><strong>Exporter</strong> — Téléchargez le CSV via <strong>⬇ Télécharger le CSV complet</strong>. Filtrez par <span class="inline-code">score_signal ≥ 70</span> pour les prospects chauds.</div></div>
-    <div class="step-doc"><div class="step-doc-num">6</div><div class="step-doc-content"><strong>Activer</strong> — Utilisez les codes postaux pour créer des audiences publicitaires géolocalisées sur Meta ou Google Ads. Segmentez par signal pour adapter le message.</div></div>
-  </div>
-  <h3>Exemple d'intégration CRM</h3>
-  <div class="doc-code"><span class="c"># Import dans HubSpot via API</span>
-<span class="k">import</span> pandas <span class="k">as</span> pd
-
-df = pd.<span class="f">read_csv</span>(<span class="s">'data/prospects_75_20241201.csv'</span>)
-hot = df[df[<span class="s">'score_signal'</span>] >= 70].copy()
-hot[<span class="s">'hubspot_tag'</span>] = hot[<span class="s">'signal'</span>].<span class="f">map</span>({
-    <span class="s">'divorce'</span>:  <span class="s">'PROSPECT_DIVORCE'</span>,
-    <span class="s">'retraite'</span>: <span class="s">'PROSPECT_RETRAITE'</span>,
-    <span class="s">'heritage'</span>: <span class="s">'PROSPECT_HERITAGE'</span>,
-    <span class="s">'upgrade'</span>:  <span class="s">'PROSPECT_UPGRADE'</span>,
-    <span class="s">'primo'</span>:    <span class="s">'PROSPECT_PRIMO'</span>,
-})
-hot.<span class="f">to_csv</span>(<span class="s">'hubspot_import.csv'</span>, index=<span class="k">False</span>)</div>
-</div>
-""", unsafe_allow_html=True)
