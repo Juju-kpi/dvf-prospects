@@ -1,5 +1,5 @@
 """
-DVF × BODACC — Application Streamlit
+DVF - BODACC — Application Streamlit
 Déployable sur Streamlit Cloud (https://streamlit.io/cloud)
 """
 
@@ -16,7 +16,7 @@ from pipeline import run_pipeline, SIGNAL_LABELS, SIGNAL_COLORS
 
 # ── Config page ──────────────────────────────────────────────
 st.set_page_config(
-    page_title="DVF × BODACC — Prospects immobiliers",
+    page_title="DVF BODACC — Prospects immobiliers",
     page_icon="🏠",
     layout="wide",
     initial_sidebar_state="expanded",
